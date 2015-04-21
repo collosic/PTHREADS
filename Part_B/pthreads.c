@@ -120,7 +120,7 @@ void *searchString(void *thread_data) {
     // for Part B we need to continue in a loop until a condition is met
     t_data *data = (t_data *) thread_data;
     
-    // update the initial slice using SV
+    // get an initial slice from SV
     int current_slice;
     getSlice(&current_slice, data);
 
@@ -134,12 +134,8 @@ void *searchString(void *thread_data) {
                 break;
             }
         }
-        // get SV and increment, then update array slice search
-        pthread_mutex_lock (&mutexsv);
-        current_slice = SV++;
-        data->array_start = (current_slice - 1) * slice_size;
-        data->array_end = data->array_start + (slice_size - 1);
-        pthread_mutex_unlock (&mutexsv);
+        // get a new slice 
+        getSlice(&current_slice, data);
     }
     char _temp[MAXLINE];
     pthread_mutex_lock (&mutexstring);
