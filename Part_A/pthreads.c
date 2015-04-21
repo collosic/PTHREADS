@@ -24,27 +24,10 @@ int main(int argc, char *argv[])
         return -1;
     }
     
-    // lets extract the meta data
-    char *results = NULL;
-    char _tempBuf[MAXLINE];
-    results = fgets(_tempBuf, MAXLINE, fptr);
-    const int NT = atoi(_tempBuf); 
-    results = fgets(_tempBuf, MAXLINE, fptr);
-    const int NS = atoi(_tempBuf);
-    results = fgets(_tempBuf, MAXLINE, fptr);  
-    searchStr = _tempBuf;
-    strtok(searchStr, NEWLINE);
-
-    // now lets place the remianing contents in a array 
-    char s[MAXLINE];
-    
-    for (int i = 0; i < DATA_SIZE; ++i) {
-        fgets(s, MAXLINE, fptr); 
-        strtok(s, NEWLINE);
-        dataArray[i] = (char *) malloc(strlen(s));
-        strcpy(dataArray[i], s);
-    }
-    // close the file
+    int NT;
+    int NS;
+    // get all the needed data from the file and pul the file into an array
+    generateData(fptr, &NT, &NS);
     fclose(fptr);
 
     // construct pthreads
@@ -85,14 +68,52 @@ int main(int argc, char *argv[])
             printf("ERROR; return code from pthread_join() is %d\n", rc);
             exit(-1);
         }
-        // set out the output file
     }
      
     writeToFile();
+    releaseData();
     pthread_mutex_destroy(&mutexstring); 
     pthread_exit(NULL);
     return 0;
 }
+
+
+void generateData(FILE *fptr, int *NT, int *NS) {
+    // lets extract the meta data
+    char _tempBuf[MAXLINE];
+    if(fgets(_tempBuf, MAXLINE, fptr) == NULL) {
+       // if we get in here something went wrong with the extraction
+       puts("Error extracting data from file");
+       exit(-1); 
+    }
+    *NT = atoi(_tempBuf); 
+    if (fgets(_tempBuf, MAXLINE, fptr) == NULL) {
+        puts("Error extracting data from file");
+        exit(-1);
+    }
+    *NS = atoi(_tempBuf);
+    if (fgets(_tempBuf, MAXLINE, fptr) == NULL) {
+        puts("Error extracting data from file");
+        exit(-1);
+    }
+
+    // here we remove the annoying newline from the matching string
+    strtok(_tempBuf, NEWLINE);
+    searchStr = malloc(strlen(_tempBuf) + 1);
+    strcpy(searchStr, _tempBuf);
+
+    // now lets place the remianing contents in a array 
+    char s[MAXLINE];
+    
+    for (int i = 0; i < DATA_SIZE; ++i) {
+        fgets(s, MAXLINE, fptr); 
+        strtok(s, NEWLINE);
+        dataArray[i] = (char *) malloc(strlen(s) + 1);
+        strcpy(dataArray[i], s);
+    }
+}
+
+
 
 
 void initThreadsData(int id, int start, int end, t_data *data) {
@@ -103,6 +124,7 @@ void initThreadsData(int id, int start, int end, t_data *data) {
     data->array_start = start;
     data->array_end = end;
 }
+
 
 void *searchString(void *thread_data) {
     t_data *data = (t_data *) thread_data;
@@ -132,4 +154,11 @@ void writeToFile() {
     fptr = fopen("out.txt", "w");
     fputs(out, fptr);
     fclose(fptr); 
+}
+
+void releaseData() {
+    for (int i = 0; i < DATA_SIZE; ++i) {
+        free(dataArray[i]);
+    }
+    free(searchStr);
 }

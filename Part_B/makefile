@@ -5,16 +5,16 @@
 #
 
 C = gcc
-CFLAGS = -I.
+CFLAGS = -lpthread -std=c99 
 
 DEPS = pthreads.h
 OBJ = pthreads.o
 
 %.o: %.c $(DEPS)
-	$(CC) -g -c -Wall -pthreads -o $@ $< $(CFLAGS)
+	$(CC) -g -c -Wall -o $@ $< $(CFLAGS)
 
 pthreads: $(OBJ)
 	gcc -o $@ $^ $(CFLAGS)
 
 clean:	
-	rm -f pthreads output.txt *.o
+	rm -f pthreads out.txt *.o

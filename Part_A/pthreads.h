@@ -29,10 +29,11 @@ typedef struct {
 } t_data;
 
 // function definitions
-void extractToArray(FILE *ftpr, char *array[DATA_SIZE]);
+void generateData(FILE *ftpr, int *NT, int *NS);
 void initThreadsData(int id, int start, int end, t_data *data);
 void *searchString(void *data);
 void writeToFile();
+void releaseData();
 
 // global variables used by the pthreads
 char *dataArray[DATA_SIZE];

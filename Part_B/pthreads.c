@@ -1,8 +1,5 @@
-/*
- *
- *
- *
- *
+/* Christian Collosi
+ * CS131 - Lab1 - Part B
  *
  *
  */
@@ -24,27 +21,9 @@ int main(int argc, char *argv[])
         return -1;
     }
     
-    // lets extract the meta data
-    char *results = NULL;
-    char _tempBuf[MAXLINE];
-    results = fgets(_tempBuf, MAXLINE, fptr);
-    const int NT = atoi(_tempBuf); 
-    results = fgets(_tempBuf, MAXLINE, fptr);
-    const int NS = atoi(_tempBuf);
-    results = fgets(_tempBuf, MAXLINE, fptr);  
-    searchStr = _tempBuf;
-    strtok(searchStr, NEWLINE);
-
-    // now lets place the remianing contents in a array 
-    char s[MAXLINE];
-    
-    for (int i = 0; i < DATA_SIZE; ++i) {
-        fgets(s, MAXLINE, fptr); 
-        strtok(s, NEWLINE);
-        dataArray[i] = (char *) malloc(strlen(s));
-        strcpy(dataArray[i], s);
-    }
-    // close the file
+    int NT;
+    // get all the needed data from the file and pul the file into an array
+    generateData(fptr, &NT, &NS);
     fclose(fptr);
 
     // construct pthreads
@@ -54,28 +33,23 @@ int main(int argc, char *argv[])
     void *status;
     int rc;
     long t;
-    int slice_size = DATA_SIZE / NS;
-    int slice_start = 0;
-    int slice_end = slice_size - 1;
+    SV = 1;
+    slice_size = DATA_SIZE / NS;
 
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    pthread_mutex_init(&mutexsv, NULL);
     pthread_mutex_init(&mutexstring, NULL);
 
     // now create generate the thread data for each thread and run them
     for (t = 0; t < NT; ++t) {
-        initThreadsData(t, slice_start, slice_end, &thread_data[t]);
-        slice_start = slice_end + 1;
-        slice_end += slice_size;
+        initThreadsData(t, &thread_data[t]);
         rc = pthread_create(&threads[t], NULL, searchString, (void *) &thread_data[t]);
         if (rc) {
             printf("ERROR; return code from pthread_create() is %d\n", rc);
             exit(-1);
         }
     }
-
-
-    // pass the thread data over to 
     pthread_attr_destroy(&attr);
 
     // here we wait for all the threads to complete before writing to the file 
@@ -85,34 +59,92 @@ int main(int argc, char *argv[])
             printf("ERROR; return code from pthread_join() is %d\n", rc);
             exit(-1);
         }
-        // set out the output file
     }
-     
+    // write to file and clean up     
     writeToFile();
+    releaseData();
+    pthread_mutex_destroy(&mutexsv);
     pthread_mutex_destroy(&mutexstring); 
     pthread_exit(NULL);
     return 0;
 }
 
 
-void initThreadsData(int id, int start, int end, t_data *data) {
+void generateData(FILE *fptr, int *NT, int *NS) {
+    // lets extract the meta data
+    char _tempBuf[MAXLINE];
+    if(fgets(_tempBuf, MAXLINE, fptr) == NULL) {
+       // if we get in here something went wrong with the extraction
+       puts("Error extracting data from file");
+       exit(-1); 
+    }
+    *NT = atoi(_tempBuf); 
+    if (fgets(_tempBuf, MAXLINE, fptr) == NULL) {
+        puts("Error extracting data from file");
+        exit(-1);
+    }
+    *NS = atoi(_tempBuf);
+    if (fgets(_tempBuf, MAXLINE, fptr) == NULL) {
+        puts("Error extracting data from file");
+        exit(-1);
+    }
+
+    // here we remove the annoying newline from the matching string
+    strtok(_tempBuf, NEWLINE);
+    searchStr = malloc(strlen(_tempBuf) + 1);
+    strcpy(searchStr, _tempBuf);
+
+    // now lets place the remianing contents in a array 
+    char s[MAXLINE];
+    
+    for (int i = 0; i < DATA_SIZE; ++i) {
+        fgets(s, MAXLINE, fptr); 
+        strtok(s, NEWLINE);
+        dataArray[i] = (char *) malloc(strlen(s) + 1);
+        strcpy(dataArray[i], s);
+    }
+}
+
+
+
+
+void initThreadsData(int id, t_data *data) {
     data->t_id = id;
     strcpy(data->string_found, "no");
     data->slice_index = -1;
     data->string_index = -1;
-    data->array_start = start;
-    data->array_end = end;
 }
 
+
 void *searchString(void *thread_data) {
+    // for Part B we need to continue in a loop until a condition is met
     t_data *data = (t_data *) thread_data;
-    for (int i = data->array_start; i < data->array_end; ++i) {
-        if (!strcmp(dataArray[i], searchStr)) {
-            strcpy(data->string_found, "yes"); 
-            data->slice_index = data->t_id;
-            data->string_index = i;
-            break;
+    
+    // update the initial slice using SV
+    int current_slice;
+    pthread_mutex_lock (&mutexsv);
+    current_slice = SV++;
+
+    // update the thread data
+    data->array_start = (current_slice - 1) * slice_size;
+    data->array_end = data->array_start + (slice_size - 1);
+    pthread_mutex_unlock (&mutexsv);
+
+    while (current_slice < (NS + 1)) {
+        for (int i = data->array_start; i < data->array_end; ++i) {
+            if (!strcmp(dataArray[i], searchStr)) {
+                strcpy(data->string_found, "yes"); 
+                data->slice_index = current_slice;
+                data->string_index = i;
+                break;
+            }
         }
+        // get SV and increment, then update array slice search
+        pthread_mutex_lock (&mutexsv);
+        current_slice = SV++;
+        data->array_start = (current_slice - 1) * slice_size;
+        data->array_end = data->array_start + (slice_size - 1);
+        pthread_mutex_unlock (&mutexsv);
     }
     char _temp[MAXLINE];
     pthread_mutex_lock (&mutexstring);
@@ -132,4 +164,11 @@ void writeToFile() {
     fptr = fopen("out.txt", "w");
     fputs(out, fptr);
     fclose(fptr); 
+}
+
+void releaseData() {
+    for (int i = 0; i < DATA_SIZE; ++i) {
+        free(dataArray[i]);
+    }
+    free(searchStr);
 }
