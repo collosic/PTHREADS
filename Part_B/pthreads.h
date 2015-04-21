@@ -33,6 +33,7 @@ typedef struct {
 void generateData(FILE *ftpr, int *NT, int *NS);
 void initThreadsData(int id, t_data *data);
 void *searchString(void *data);
+void getSlice(int *current_slice, t_data *data);
 void writeToFile();
 void releaseData();
 

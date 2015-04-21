@@ -122,14 +122,9 @@ void *searchString(void *thread_data) {
     
     // update the initial slice using SV
     int current_slice;
-    pthread_mutex_lock (&mutexsv);
-    current_slice = SV++;
+    getSlice(&current_slice, data);
 
-    // update the thread data
-    data->array_start = (current_slice - 1) * slice_size;
-    data->array_end = data->array_start + (slice_size - 1);
-    pthread_mutex_unlock (&mutexsv);
-
+    // begin search
     while (current_slice < (NS + 1)) {
         for (int i = data->array_start; i < data->array_end; ++i) {
             if (!strcmp(dataArray[i], searchStr)) {
@@ -171,4 +166,15 @@ void releaseData() {
         free(dataArray[i]);
     }
     free(searchStr);
+}
+
+
+void getSlice(int *current_slice, t_data *data) {
+    pthread_mutex_lock (&mutexsv);
+    *current_slice = SV++;
+
+    // update the thread data
+    data->array_start = (*current_slice - 1) * slice_size;
+    data->array_end = data->array_start + (slice_size - 1);
+    pthread_mutex_unlock (&mutexsv);
 }
