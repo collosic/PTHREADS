@@ -11,10 +11,10 @@ DEPS = pthreads.h
 OBJ = pthreads.o
 
 %.o: %.c $(DEPS)
-	$(CC) -g -c -Wall -o $@ $< $(CFLAGS)
+	$(CC) -g -c -Wall -pthreads -o $@ $< $(CFLAGS)
 
 pthreads: $(OBJ)
 	gcc -o $@ $^ $(CFLAGS)
 
 clean:	
-	rm -f record *.o
+	rm -f pthreads output.txt *.o
