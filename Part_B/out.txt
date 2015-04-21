@@ -1,4 +1,0 @@
-thread2,	found yes,	slice 20,	position 95759
-thread0,	found no,	slice -1,	position -1
-thread1,	found no,	slice -1,	position -1
-thread3,	found no,	slice -1,	position -1
