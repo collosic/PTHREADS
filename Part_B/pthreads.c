@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     int rc;
     long t;
     SV = 1;
-    slice_size = DATA_SIZE / NS;
+    slice_size = data_size / NS;
 
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -96,8 +96,19 @@ void generateData(FILE *fptr, int *NT, int *NS) {
 
     // now lets place the remianing contents in a array 
     char s[MAXLINE];
-    
-    for (int i = 0; i < DATA_SIZE; ++i) {
+    data_size = 0;
+
+    while (fgets(s, MAXLINE, fptr))
+       data_size++;
+
+    rewind(fptr);
+
+    for (int i = 0; i < 3; ++i)
+       fgets(s, MAXLINE, fptr);
+
+    dataArray = (char **) malloc(data_size * sizeof(char *));
+
+    for (int i = 0; i < data_size; ++i) {
         fgets(s, MAXLINE, fptr); 
         strtok(s, NEWLINE);
         dataArray[i] = (char *) malloc(strlen(s) + 1);
@@ -127,6 +138,8 @@ void *searchString(void *thread_data) {
     // begin search
     while (current_slice < (NS + 1)) {
         for (int i = data->array_start; i < data->array_end; ++i) {
+            if (data->array_end + 1 > data_size)
+                break;
             if (!strcmp(dataArray[i], searchStr)) {
                 strcpy(data->string_found, "yes"); 
                 data->slice_index = current_slice;
@@ -158,9 +171,10 @@ void writeToFile() {
 }
 
 void releaseData() {
-    for (int i = 0; i < DATA_SIZE; ++i) {
+    for (int i = 0; i < data_size; ++i) {
         free(dataArray[i]);
     }
+    free(dataArray);
     free(searchStr);
 }
 

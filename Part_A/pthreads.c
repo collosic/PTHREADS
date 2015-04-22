@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     void *status;
     int rc;
     long t;
-    int slice_size = DATA_SIZE / NS;
+    int slice_size = data_size / NS;
     int slice_start = 0;
     int slice_end = slice_size - 1;
 
@@ -104,8 +104,21 @@ void generateData(FILE *fptr, int *NT, int *NS) {
 
     // now lets place the remianing contents in a array 
     char s[MAXLINE];
-    
-    for (int i = 0; i < DATA_SIZE; ++i) {
+    data_size = 0;
+    while (fgets(s, MAXLINE, fptr))
+        data_size++;
+
+    // lets now rewind the file back to the beginning
+    rewind(fptr);
+
+    // skip the first three lines
+    for (int i = 0; i < 3; ++i)
+        fgets(s, MAXLINE, fptr);
+
+    // now lets allocate our array
+    dataArray = (char **) malloc(data_size * sizeof(char *));
+
+    for (int i = 0; i < data_size; ++i) {
         fgets(s, MAXLINE, fptr); 
         strtok(s, NEWLINE);
         dataArray[i] = (char *) malloc(strlen(s) + 1);
@@ -129,6 +142,8 @@ void initThreadsData(int id, int start, int end, t_data *data) {
 void *searchString(void *thread_data) {
     t_data *data = (t_data *) thread_data;
     for (int i = data->array_start; i < data->array_end; ++i) {
+        if (data->array_end + 1 > data_size)
+            break;
         if (!strcmp(dataArray[i], searchStr)) {
             strcpy(data->string_found, "yes"); 
             data->slice_index = data->t_id;
@@ -157,8 +172,9 @@ void writeToFile() {
 }
 
 void releaseData() {
-    for (int i = 0; i < DATA_SIZE; ++i) {
+    for (int i = 0; i < data_size; ++i) {
         free(dataArray[i]);
     }
+    free(dataArray);
     free(searchStr);
 }

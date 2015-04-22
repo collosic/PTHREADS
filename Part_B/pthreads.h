@@ -13,7 +13,6 @@
 
 // constants
 #define MAXLINE 512
-#define DATA_SIZE 100000
 #define FOUND_SIZE 4
 
 // constant strings
@@ -38,7 +37,8 @@ void writeToFile();
 void releaseData();
 
 // global variables used by the pthreads
-char *dataArray[DATA_SIZE];
+int data_size;
+char **dataArray;
 char *searchStr;
 char out[MAXLINE];
 int NS;

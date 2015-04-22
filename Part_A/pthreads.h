@@ -13,7 +13,6 @@
 
 // constants
 #define MAXLINE 512
-#define DATA_SIZE 100000
 
 // constant strings
 const char NEWLINE[2] = "\n";
@@ -36,7 +35,8 @@ void writeToFile();
 void releaseData();
 
 // global variables used by the pthreads
-char *dataArray[DATA_SIZE];
+int data_size;
+char **dataArray;
 char *searchStr;
 char out[MAXLINE];
 pthread_mutex_t mutexstring;
