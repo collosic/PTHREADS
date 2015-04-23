@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <math.h>
 
 
 // constants

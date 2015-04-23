@@ -37,9 +37,10 @@ int main(int argc, char *argv[])
     void *status;
     int rc;
     long t;
-    int slice_size = data_size / NS;
+    int extra = !(data_size % NS) ? 0 : NS - (data_size % NS);
+    int slice_size = (data_size + extra) / NS;
     int slice_start = 0;
-    int slice_end = slice_size - 1;
+    int slice_end = slice_size;
 
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
     // now create generate the thread data for each thread and run them
     for (t = 0; t < NT; ++t) {
         initThreadsData(t, slice_start, slice_end, &thread_data[t]);
-        slice_start = slice_end + 1;
+        slice_start = slice_end;
         slice_end += slice_size;
         rc = pthread_create(&threads[t], NULL, searchString, (void *) &thread_data[t]);
         if (rc) {
@@ -142,7 +143,7 @@ void initThreadsData(int id, int start, int end, t_data *data) {
 void *searchString(void *thread_data) {
     t_data *data = (t_data *) thread_data;
     for (int i = data->array_start; i < data->array_end; ++i) {
-        if (data->array_end + 1 > data_size)
+        if (data->array_end > data_size)
             break;
         if (!strcmp(dataArray[i], searchStr)) {
             strcpy(data->string_found, "yes"); 

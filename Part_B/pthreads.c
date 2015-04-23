@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
     int rc;
     long t;
     SV = 1;
-    slice_size = data_size / NS;
+    int extra = !(data_size % NS) ? 0 : NS - (data_size % NS);
+    slice_size = (data_size + extra) / NS;
 
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -138,7 +139,7 @@ void *searchString(void *thread_data) {
     // begin search
     while (current_slice < (NS + 1)) {
         for (int i = data->array_start; i < data->array_end; ++i) {
-            if (data->array_end + 1 > data_size)
+            if (data->array_end > data_size)
                 break;
             if (!strcmp(dataArray[i], searchStr)) {
                 strcpy(data->string_found, "yes"); 
@@ -185,6 +186,6 @@ void getSlice(int *current_slice, t_data *data) {
 
     // update the thread data
     data->array_start = (*current_slice - 1) * slice_size;
-    data->array_end = data->array_start + (slice_size - 1);
+    data->array_end = data->array_start + slice_size;
     pthread_mutex_unlock (&mutexsv);
 }
