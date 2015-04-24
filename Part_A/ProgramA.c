@@ -1,5 +1,6 @@
 /*  
  *  Christian Collosi
+ *  11233529
  *  CS131
  *  Lab1 - Part A
  *  compiled with the following gcc command
@@ -111,6 +112,7 @@ int main(int argc, char *argv[])
     }
      
     writeToFile();
+    puts(out);
     releaseData();
     pthread_mutex_destroy(&mutexstring); 
     pthread_exit(NULL);
@@ -206,7 +208,7 @@ void *searchString(void *thread_data) {
 
 void writeToFile() {
     FILE *fptr;
-    fptr = fopen("out.txt", "w");
+    fptr = fopen("OutA.txt", "w");
     fputs(out, fptr);
     fclose(fptr); 
 }
