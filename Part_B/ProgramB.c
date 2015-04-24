@@ -189,7 +189,7 @@ void *searchString(void *thread_data) {
     // begin search
     while (current_slice < (NS + 1)) {
         for (int i = data->array_start; i < data->array_end; ++i) {
-            if (data->array_end > data_size)
+            if (i >= data_size)
                 break;
             if (!strcmp(dataArray[i], searchStr)) {
                 strcpy(data->string_found, "yes"); 

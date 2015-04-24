@@ -184,7 +184,7 @@ void initThreadsData(int id, int start, int end, t_data *data) {
 void *searchString(void *thread_data) {
     t_data *data = (t_data *) thread_data;
     for (int i = data->array_start; i < data->array_end; ++i) {
-        if (data->array_end > data_size)
+        if (i >= data_size)
             break;
         if (!strcmp(dataArray[i], searchStr)) {
             strcpy(data->string_found, "yes"); 
