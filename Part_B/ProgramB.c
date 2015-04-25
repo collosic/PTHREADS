@@ -193,7 +193,7 @@ void *searchString(void *thread_data) {
                 break;
             if (!strcmp(dataArray[i], searchStr)) {
                 strcpy(data->string_found, "yes"); 
-                data->slice_index = current_slice;
+                data->slice_index = current_slice - 1;
                 data->string_index = i;
                 break;
             }
